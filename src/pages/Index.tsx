@@ -30,6 +30,17 @@ const Index = () => {
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const { toast } = useToast();
 
+  // Type guard to check if data is SeriesData array
+  const isSeriesDataArray = (data: any): data is SeriesData[] => {
+    return Array.isArray(data) && 
+           data.every(item => 
+             typeof item === 'object' && 
+             item !== null &&
+             typeof item.date === 'string' && 
+             typeof item.value === 'number'
+           );
+  };
+
   // Fetch the latest report from Supabase
   const fetchLatestReport = async () => {
     try {
@@ -46,10 +57,14 @@ const Index = () => {
 
       if (data && data.length > 0) {
         const rawReport = data[0];
-        // Transform the report to match our interface
+        // Safely convert series_data with type checking
+        const seriesData = rawReport.series_data && isSeriesDataArray(rawReport.series_data) 
+          ? rawReport.series_data 
+          : null;
+        
         const transformedReport: Report = {
           ...rawReport,
-          series_data: rawReport.series_data as SeriesData[] | null
+          series_data: seriesData
         };
         return transformedReport;
       }
