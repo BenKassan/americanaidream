@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import GraphicOfDay from "@/components/GraphicOfDay";
 
+interface SeriesData {
+  date: string;
+  value: number;
+}
+
 interface Report {
   id: string;
   rating: number;
@@ -16,7 +20,7 @@ interface Report {
   american_dream_impact?: string;
   series_id?: string;
   series_title?: string;
-  series_data?: Array<{ date: string; value: number }>;
+  series_data?: SeriesData[] | null;
   created_at: string;
 }
 
@@ -40,7 +44,17 @@ const Index = () => {
         return null;
       }
 
-      return data?.[0] || null;
+      if (data && data.length > 0) {
+        const rawReport = data[0];
+        // Transform the report to match our interface
+        const transformedReport: Report = {
+          ...rawReport,
+          series_data: rawReport.series_data as SeriesData[] | null
+        };
+        return transformedReport;
+      }
+
+      return null;
     } catch (error) {
       console.error('Error:', error);
       return null;
