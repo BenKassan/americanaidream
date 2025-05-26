@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +48,19 @@ const Index = () => {
     try {
       const { data, error } = await supabase
         .from('reports')
-        .select('*')
+        .select(`
+          id,
+          rating,
+          summary,
+          productivity_insight,
+          american_dream_impact,
+          prod_labor_score,
+          prod_labor_tooltip,
+          series_id,
+          series_title,
+          series_data,
+          created_at
+        `)
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -69,6 +80,8 @@ const Index = () => {
           ...rawReport,
           series_data: seriesData
         };
+        
+        console.log('Fetched report:', transformedReport); // Debug log
         return transformedReport;
       }
 
