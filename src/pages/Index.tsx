@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -276,17 +277,36 @@ const Index = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow">
+                  <div className="flex flex-col items-center p-6 bg-blue-50 rounded-xl shadow">
                     <span className="text-sm uppercase tracking-wide text-blue-700">
                       American Dream Score
                     </span>
-                    <span className={`mt-2 text-5xl font-bold ${latestReport.american_dream_score !== undefined ? getScoreColor(latestReport.american_dream_score) : 'text-gray-400'}`}>
-                      {latestReport.american_dream_score ?? '—'}
-                    </span>
-                    <span className="text-xs text-blue-700 mt-1">Score /100</span>
-                    <p className="text-center text-blue-800 mt-3 text-sm">
-                      {latestReport.american_dream_tooltip || 'No analysis available'}
-                    </p>
+                    {(() => {
+                      const dream = latestReport?.american_dream_score ?? null;
+                      const dreamTip = latestReport?.american_dream_tooltip ?? "—";
+                      const dreamClass = dream === null ? "text-gray-400"
+                        : dream <= 40 ? "text-red-600"
+                        : dream <= 70 ? "text-yellow-600"
+                        : "text-green-600";
+                      
+                      return (
+                        <>
+                          <span className={`mt-2 text-5xl font-bold ${dreamClass}`}>
+                            {dream ?? "—"}
+                          </span>
+                          <span className="text-xs text-blue-700 mt-1">Score /100</span>
+                          <p className="text-center text-blue-800 mt-3 text-sm">{dreamTip}</p>
+                          
+                          {/* Legend */}
+                          <hr className="my-4 w-full border-blue-100" />
+                          <ul className="text-xs leading-5 text-blue-800 space-y-1">
+                            <li><span className="font-semibold text-green-600">High (71-100):</span> strong mobility, abundant opportunity</li>
+                            <li><span className="font-semibold text-yellow-600">Mid (41-70):</span> mixed signals</li>
+                            <li><span className="font-semibold text-red-600">Low (0-40):</span> limited mobility & bleak outlook</li>
+                          </ul>
+                        </>
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>

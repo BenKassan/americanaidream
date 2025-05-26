@@ -127,23 +127,26 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an AI economic analyst that provides data-driven insights based on current news. Your analysis should focus exclusively on the actual trends, data points, and real-world developments mentioned in the provided news articles.
-
+            content: `You are an economic analyst. Return ONLY valid JSON:
+            {
+              "rating": <1-10>,
+              "summary": "<≤300 chars>",
+              "prod_labor_score": <0-100>,
+              "prod_labor_tip": "<≤120 chars>",
+              "american_dream_score": <0-100>,
+              "american_dream_tooltip": "<≤120 chars>"
+            }
+            
+            Scale – American Dream Score:
+            0-40 = Low mobility & opportunity
+            41-70 = Mixed signals  
+            71-100 = Strong upward mobility, near-ideal American Dream
+            
             Analyze the provided news articles about AI's impact on labor markets and the economy. Focus on:
             - Actual data points, statistics, and trends mentioned in the articles
             - Real company announcements, job market changes, and economic indicators
             - Concrete examples of productivity gains vs. labor market effects
             - Specific policy responses and industry developments reported
-
-            Return ONLY valid JSON with exactly these keys:
-            - rating: number between 1-10 (1 = severe negative impact on American workers, 10 = significant positive opportunities)
-            - summary: comprehensive data-driven analysis (800-1000 characters) citing specific trends and developments from the news
-            - productivity_insight: brief insight on productivity vs. labor trends from the news (200-250 characters)
-            - american_dream_impact: assessment based on reported economic data and trends (200-250 characters)
-            - prod_labor_score: number between 0-100 (0 = labor fully loses value, 100 = labor value rises faster than productivity gains)
-            - prod_labor_tip: explanation of the prod_labor_score in 120 characters or less
-            - american_dream_score: number between 0-100 (0 = no social mobility or opportunity, 100 = ideal American Dream with maximum upward mobility and equal opportunity)
-            - american_dream_tip: explanation of the american_dream_score in 120 characters or less
             
             Base your analysis strictly on the actual news content provided. Do not invent data or statistics.`
           },
@@ -174,9 +177,9 @@ Deno.serve(async (req) => {
       analysis = JSON.parse(cleanedContent);
       
       // Validate the required fields
-      if (!analysis.rating || !analysis.summary || !analysis.productivity_insight || !analysis.american_dream_impact || 
+      if (!analysis.rating || !analysis.summary || 
           !analysis.prod_labor_score || !analysis.prod_labor_tip || 
-          !analysis.american_dream_score || !analysis.american_dream_tip) {
+          !analysis.american_dream_score || !analysis.american_dream_tooltip) {
         throw new Error('Missing required fields in AI response');
       }
       
@@ -225,7 +228,7 @@ Deno.serve(async (req) => {
         prod_labor_score: analysis.prod_labor_score,
         prod_labor_tooltip: analysis.prod_labor_tip,
         american_dream_score: analysis.american_dream_score,
-        american_dream_tooltip: analysis.american_dream_tip,
+        american_dream_tooltip: analysis.american_dream_tooltip,
         series_id: selectedSeries.id,
         series_title: selectedSeries.title,
         series_data: seriesData
