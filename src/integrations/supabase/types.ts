@@ -14,6 +14,8 @@ export type Database = {
           american_dream_impact: string | null
           created_at: string
           id: string
+          prod_labor_score: number | null
+          prod_labor_tooltip: string | null
           productivity_insight: string | null
           rating: number
           series_data: Json | null
@@ -25,6 +27,8 @@ export type Database = {
           american_dream_impact?: string | null
           created_at?: string
           id?: string
+          prod_labor_score?: number | null
+          prod_labor_tooltip?: string | null
           productivity_insight?: string | null
           rating: number
           series_data?: Json | null
@@ -36,6 +40,8 @@ export type Database = {
           american_dream_impact?: string | null
           created_at?: string
           id?: string
+          prod_labor_score?: number | null
+          prod_labor_tooltip?: string | null
           productivity_insight?: string | null
           rating?: number
           series_data?: Json | null

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,8 @@ interface Report {
   summary: string;
   productivity_insight?: string;
   american_dream_impact?: string;
+  prod_labor_score?: number;
+  prod_labor_tooltip?: string;
   series_id?: string;
   series_title?: string;
   series_data?: SeriesData[] | null;
@@ -151,6 +154,12 @@ const Index = () => {
     return "Critical Disruption";
   };
 
+  const getScoreColor = (score: number) => {
+    if (score >= 71) return "text-green-600";
+    if (score >= 41) return "text-yellow-600";
+    return "text-red-600";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
       {/* Header */}
@@ -204,22 +213,29 @@ const Index = () => {
         {latestReport && (
           <>
             <div className="grid md:grid-cols-2 gap-6">
-              {/* Productivity vs Labor Value */}
-              {latestReport.productivity_insight && (
-                <Card className="shadow-lg border-0 bg-gradient-to-br from-orange-50 to-red-50">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center space-x-2 text-orange-800">
-                      <Factory className="h-5 w-5" />
-                      <span>Productivity vs. Labor Value</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-orange-700 leading-relaxed">
-                      {latestReport.productivity_insight}
+              {/* Productivity vs Labor Value Score */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-orange-50 to-red-50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center space-x-2 text-orange-800">
+                    <Factory className="h-5 w-5" />
+                    <span>Productivity vs. Labor Value</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow">
+                    <span className="text-sm uppercase tracking-wide text-gray-500">
+                      Productivity vs Labor Value
+                    </span>
+                    <span className={`mt-2 text-5xl font-bold ${latestReport.prod_labor_score !== undefined ? getScoreColor(latestReport.prod_labor_score) : 'text-gray-400'}`}>
+                      {latestReport.prod_labor_score ?? '—'}
+                    </span>
+                    <span className="text-xs text-gray-500 mt-1">Score /100</span>
+                    <p className="text-center text-gray-600 mt-3 text-sm">
+                      {latestReport.prod_labor_tooltip || 'No analysis available'}
                     </p>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* American Dream Impact */}
               {latestReport.american_dream_impact && (
