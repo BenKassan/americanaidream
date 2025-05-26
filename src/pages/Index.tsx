@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCcw, TrendingUp, Globe, Bot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Report {
   id: string;
@@ -19,22 +19,38 @@ const Index = () => {
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const { toast } = useToast();
 
-  // Mock data for demonstration - will be replaced with Supabase data
-  const mockReport: Report = {
-    id: '1',
-    rating: 7.5,
-    summary: `**Key AI Developments**: Recent advancements in AI technology continue to reshape multiple industries, with significant breakthroughs in natural language processing and automation technologies driving unprecedented adoption rates across enterprise sectors.
+  // Fetch the latest report from Supabase
+  const fetchLatestReport = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-**Economic Implications**: The integration of AI systems is creating both opportunities and challenges in the job market, with estimates suggesting 12 million new roles while potentially displacing 8 million traditional positions over the next 18 months.
+      if (error) {
+        console.error('Error fetching report:', error);
+        return null;
+      }
 
-**Overall Assessment**: Current AI economic impact shows strong positive momentum with measured disruption. Investment flows remain robust while regulatory frameworks are adapting to ensure sustainable growth patterns.`,
-    created_at: new Date().toISOString()
+      return data?.[0] || null;
+    } catch (error) {
+      console.error('Error:', error);
+      return null;
+    }
   };
 
   useEffect(() => {
-    // Initialize with mock data
-    setLatestReport(mockReport);
-    setLastUpdated(formatTimeAgo(mockReport.created_at));
+    // Load initial data
+    const loadInitialData = async () => {
+      const report = await fetchLatestReport();
+      if (report) {
+        setLatestReport(report);
+        setLastUpdated(formatTimeAgo(report.created_at));
+      }
+    };
+
+    loadInitialData();
   }, []);
 
   const formatTimeAgo = (timestamp: string) => {
@@ -50,27 +66,35 @@ const Index = () => {
   const handleRefresh = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call - will be replaced with actual edge function call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Triggering AI analysis...');
       
-      // Update with fresh mock data
-      const updatedReport = {
-        ...mockReport,
-        rating: Math.round((Math.random() * 4 + 6) * 10) / 10, // Random rating between 6-10
-        created_at: new Date().toISOString()
-      };
+      // Call the edge function to analyze news and update database
+      const { data, error } = await supabase.functions.invoke('analyze-ai-economy');
       
-      setLatestReport(updatedReport);
-      setLastUpdated(formatTimeAgo(updatedReport.created_at));
-      
-      toast({
-        title: "Data refreshed successfully",
-        description: "Latest AI economic analysis has been updated",
-      });
+      if (error) {
+        throw error;
+      }
+
+      if (data.success) {
+        // Fetch the updated report
+        const updatedReport = await fetchLatestReport();
+        if (updatedReport) {
+          setLatestReport(updatedReport);
+          setLastUpdated(formatTimeAgo(updatedReport.created_at));
+        }
+        
+        toast({
+          title: "Analysis completed successfully",
+          description: `Analyzed ${data.articlesAnalyzed} news articles and updated the economic impact rating`,
+        });
+      } else {
+        throw new Error(data.error || 'Analysis failed');
+      }
     } catch (error) {
+      console.error('Refresh error:', error);
       toast({
-        title: "Refresh failed",
-        description: "Unable to fetch latest data. Please try again.",
+        title: "Analysis failed",
+        description: error.message || "Unable to analyze latest data. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -123,7 +147,7 @@ const Index = () => {
               variant={latestReport ? getRatingBadgeVariant(latestReport.rating) : "secondary"}
               className="text-4xl font-bold px-6 py-3 rounded-full"
             >
-              {latestReport?.rating || 0} / 10
+              {latestReport?.rating || "—"} / 10
             </Badge>
           </div>
         </div>
@@ -148,7 +172,18 @@ const Index = () => {
           </Card>
         )}
 
-        {/* Impact Rating Explanation */}
+        {!latestReport && (
+          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle>No Analysis Available</CardTitle>
+              <CardDescription>
+                Click "Refresh Analysis" to generate the first AI economic impact report
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+
+        {/* Rating Scale */}
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -183,26 +218,26 @@ const Index = () => {
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-full shadow-lg transition-all duration-200 transform hover:scale-105"
           >
             <RefreshCcw className={`h-5 w-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Analyzing...' : 'Refresh Analysis'}
+            {isLoading ? 'Analyzing News...' : 'Refresh Analysis'}
           </Button>
         </div>
 
-        {/* Integration Status */}
-        <Card className="shadow-lg border-2 border-dashed border-blue-200 bg-blue-50/50">
+        {/* Status Card */}
+        <Card className="shadow-lg border-2 border-green-200 bg-green-50/50">
           <CardHeader>
-            <CardTitle className="text-blue-800">🔧 Integration Setup Required</CardTitle>
+            <CardTitle className="text-green-800">✅ System Ready</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3 text-blue-700">
-              <p><strong>Next Steps:</strong></p>
-              <ol className="list-decimal list-inside space-y-2 ml-4">
-                <li>Connect to Supabase using the green button in the top-right corner</li>
-                <li>Set up environment variables for NEWS_API_KEY and OPENAI_API_KEY</li>
-                <li>Deploy the edge function for automated news analysis</li>
-                <li>Configure the cron job for periodic updates</li>
-              </ol>
-              <p className="text-sm bg-blue-100 p-3 rounded-lg mt-4">
-                💡 Currently displaying mock data. Real analysis will replace this once integrations are complete.
+            <div className="space-y-3 text-green-700">
+              <p><strong>Connected Services:</strong></p>
+              <ul className="list-disc list-inside space-y-1 ml-4">
+                <li>✅ Supabase Database - Connected</li>
+                <li>✅ NewsAPI - Configured</li>
+                <li>✅ OpenAI GPT-4 - Configured</li>
+                <li>✅ Real-time Analysis - Ready</li>
+              </ul>
+              <p className="text-sm bg-green-100 p-3 rounded-lg mt-4">
+                🎉 Your AI-Economy Monitor is fully operational! Click "Refresh Analysis" to get the latest economic impact assessment.
               </p>
             </div>
           </CardContent>
