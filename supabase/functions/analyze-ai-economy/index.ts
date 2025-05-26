@@ -141,7 +141,9 @@ Deno.serve(async (req) => {
             - productivity_insight: brief insight on productivity vs. labor trends from the news (200-250 characters)
             - american_dream_impact: assessment based on reported economic data and trends (200-250 characters)
             - prod_labor_score: number between 0-100 (0 = labor fully loses value, 100 = labor value rises faster than productivity gains)
-            - tooltip: explanation of the prod_labor_score in 120 characters or less
+            - prod_labor_tip: explanation of the prod_labor_score in 120 characters or less
+            - american_dream_score: number between 0-100 (0 = no social mobility or opportunity, 100 = ideal American Dream with maximum upward mobility and equal opportunity)
+            - american_dream_tip: explanation of the american_dream_score in 120 characters or less
             
             Base your analysis strictly on the actual news content provided. Do not invent data or statistics.`
           },
@@ -172,7 +174,9 @@ Deno.serve(async (req) => {
       analysis = JSON.parse(cleanedContent);
       
       // Validate the required fields
-      if (!analysis.rating || !analysis.summary || !analysis.productivity_insight || !analysis.american_dream_impact || !analysis.prod_labor_score || !analysis.tooltip) {
+      if (!analysis.rating || !analysis.summary || !analysis.productivity_insight || !analysis.american_dream_impact || 
+          !analysis.prod_labor_score || !analysis.prod_labor_tip || 
+          !analysis.american_dream_score || !analysis.american_dream_tip) {
         throw new Error('Missing required fields in AI response');
       }
       
@@ -184,6 +188,11 @@ Deno.serve(async (req) => {
       // Validate prod_labor_score is within bounds
       if (typeof analysis.prod_labor_score !== 'number' || analysis.prod_labor_score < 0 || analysis.prod_labor_score > 100) {
         throw new Error('Productivity vs Labor score must be a number between 0 and 100');
+      }
+
+      // Validate american_dream_score is within bounds
+      if (typeof analysis.american_dream_score !== 'number' || analysis.american_dream_score < 0 || analysis.american_dream_score > 100) {
+        throw new Error('American Dream score must be a number between 0 and 100');
       }
 
     } catch (parseError) {
@@ -205,7 +214,7 @@ Deno.serve(async (req) => {
 
     console.log('Analysis completed, storing in database...');
 
-    // Store the analysis in Supabase with FRED data and new score
+    // Store the analysis in Supabase with FRED data and new scores
     const { data, error } = await supabase
       .from('reports')
       .insert({
@@ -214,7 +223,9 @@ Deno.serve(async (req) => {
         productivity_insight: analysis.productivity_insight,
         american_dream_impact: analysis.american_dream_impact,
         prod_labor_score: analysis.prod_labor_score,
-        prod_labor_tooltip: analysis.tooltip,
+        prod_labor_tooltip: analysis.prod_labor_tip,
+        american_dream_score: analysis.american_dream_score,
+        american_dream_tooltip: analysis.american_dream_tip,
         series_id: selectedSeries.id,
         series_title: selectedSeries.title,
         series_data: seriesData

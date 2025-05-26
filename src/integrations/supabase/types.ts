@@ -12,6 +12,8 @@ export type Database = {
       reports: {
         Row: {
           american_dream_impact: string | null
+          american_dream_score: number | null
+          american_dream_tooltip: string | null
           created_at: string
           id: string
           prod_labor_score: number | null
@@ -25,6 +27,8 @@ export type Database = {
         }
         Insert: {
           american_dream_impact?: string | null
+          american_dream_score?: number | null
+          american_dream_tooltip?: string | null
           created_at?: string
           id?: string
           prod_labor_score?: number | null
@@ -38,6 +42,8 @@ export type Database = {
         }
         Update: {
           american_dream_impact?: string | null
+          american_dream_score?: number | null
+          american_dream_tooltip?: string | null
           created_at?: string
           id?: string
           prod_labor_score?: number | null

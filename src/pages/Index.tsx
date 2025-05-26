@@ -20,6 +20,8 @@ interface Report {
   american_dream_impact?: string;
   prod_labor_score?: number;
   prod_labor_tooltip?: string;
+  american_dream_score?: number;
+  american_dream_tooltip?: string;
   series_id?: string;
   series_title?: string;
   series_data?: SeriesData[] | null;
@@ -56,6 +58,8 @@ const Index = () => {
           american_dream_impact,
           prod_labor_score,
           prod_labor_tooltip,
+          american_dream_score,
+          american_dream_tooltip,
           series_id,
           series_title,
           series_data,
@@ -263,22 +267,29 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              {/* American Dream Impact */}
-              {latestReport.american_dream_impact && (
-                <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-purple-50">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center space-x-2 text-blue-800">
-                      <Flag className="h-5 w-5" />
-                      <span>American Dream Impact</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-blue-700 leading-relaxed">
-                      {latestReport.american_dream_impact}
+              {/* American Dream Score */}
+              <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-purple-50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center space-x-2 text-blue-800">
+                    <Flag className="h-5 w-5" />
+                    <span>American Dream Score</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow">
+                    <span className="text-sm uppercase tracking-wide text-blue-700">
+                      American Dream Score
+                    </span>
+                    <span className={`mt-2 text-5xl font-bold ${latestReport.american_dream_score !== undefined ? getScoreColor(latestReport.american_dream_score) : 'text-gray-400'}`}>
+                      {latestReport.american_dream_score ?? '—'}
+                    </span>
+                    <span className="text-xs text-blue-700 mt-1">Score /100</span>
+                    <p className="text-center text-blue-800 mt-3 text-sm">
+                      {latestReport.american_dream_tooltip || 'No analysis available'}
                     </p>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Comprehensive Analysis */}
