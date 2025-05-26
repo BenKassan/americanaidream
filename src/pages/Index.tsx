@@ -173,6 +173,12 @@ const Index = () => {
     return "text-red-600";
   };
 
+  const getScoreDescription = (score: number) => {
+    if (score >= 71) return "Labor value rises with productivity gains";
+    if (score >= 41) return "Mixed impact on labor value";
+    return "Productivity gains outpace labor value";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
       {/* Header */}
@@ -246,6 +252,13 @@ const Index = () => {
                     <p className="text-center text-gray-600 mt-3 text-sm">
                       {latestReport.prod_labor_tooltip || 'No analysis available'}
                     </p>
+                    <div className="mt-4 pt-3 border-t border-gray-200 w-full">
+                      <div className="text-xs text-gray-500 space-y-1">
+                        <div><span className="text-green-600 font-medium">High (71-100):</span> Labor value rises with productivity</div>
+                        <div><span className="text-yellow-600 font-medium">Mid (41-70):</span> Mixed impact on labor value</div>
+                        <div><span className="text-red-600 font-medium">Low (0-40):</span> Productivity outpaces labor value</div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
