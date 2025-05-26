@@ -48,9 +48,12 @@ const MetricDeltaCard = ({
     return delta > 0 ? '▲' : '▼';
   };
 
-  const formattedValue = latestValue !== null && formatValue 
-    ? formatValue(latestValue) 
-    : latestValue?.toFixed(1) ?? '—';
+  const formatDisplayValue = (value: number | null) => {
+    if (value === null || isNaN(value)) return '—';
+    return formatValue ? formatValue(value) : value.toFixed(1);
+  };
+
+  const formattedValue = formatDisplayValue(latestValue);
 
   return (
     <Card className="shadow-lg">
@@ -59,7 +62,7 @@ const MetricDeltaCard = ({
         <div className="mt-2 flex justify-center gap-4 items-end">
           <span className="text-4xl font-bold">{formattedValue}</span>
           <span className={`text-lg font-semibold ${getDeltaColor(deltaValue)}`}>
-            {getDeltaIcon(deltaValue)} {deltaValue !== null ? Math.abs(deltaValue).toFixed(1) : '—'}
+            {getDeltaIcon(deltaValue)} {deltaValue !== null && !isNaN(deltaValue) ? Math.abs(deltaValue).toFixed(1) : '—'}
           </span>
         </div>
         <p className="mt-1 text-xs text-gray-500">Change since 1 Jan 2025</p>
@@ -118,19 +121,20 @@ const History = () => {
   }, []);
 
   const delta = (a?: number | null, b?: number | null) => {
-    if (a == null || b == null) return null;
+    if (a == null || b == null || isNaN(a) || isNaN(b)) return null;
     return b - a;
   };
 
-  const reportsBaseline = reportData.find(r => new Date(r.created_at) >= new Date('2025-01-01'));
+  // Find baseline and latest with fallback
+  const reportsBaseline = reportData.find(r => new Date(r.created_at) >= new Date('2025-01-01')) || reportData[0];
   const reportsLatest = reportData[reportData.length - 1];
   
-  const macroBaseline = macroData.find(r => new Date(r.snapshot_date) >= new Date('2025-01-01'));
+  const macroBaseline = macroData.find(r => new Date(r.snapshot_date) >= new Date('2025-01-01')) || macroData[0];
   const macroLatest = macroData[macroData.length - 1];
 
   const formatChartData = (data: any[], key: string, dateKey: string) => {
     return data
-      .filter(item => item[key] !== null)
+      .filter(item => item[key] !== null && !isNaN(item[key]))
       .map(item => ({
         date: format(new Date(item[dateKey]), 'MMM dd'),
         value: item[key] as number,
@@ -138,7 +142,15 @@ const History = () => {
       }));
   };
 
-  const formatCurrency = (value: number) => `$${(value / 1000).toFixed(0)}k`;
+  const formatCurrency = (value: number) => {
+    if (isNaN(value)) return '—';
+    return `$${(value / 1000).toFixed(0)}k`;
+  };
+
+  const formatPercent = (value: number) => {
+    if (isNaN(value)) return '—';
+    return `${value.toFixed(1)}%`;
+  };
 
   if (loading) {
     return (
@@ -206,10 +218,11 @@ const History = () => {
             deltaValue={delta(reportsBaseline?.american_dream_score, reportsLatest?.american_dream_score)}
           />
           <MetricDeltaCard
-            title="Unemployment Rate (%)"
+            title="Unemployment Rate"
             latestValue={macroLatest?.unrate}
             deltaValue={delta(macroBaseline?.unrate, macroLatest?.unrate)}
             isPositiveGood={false}
+            formatValue={formatPercent}
           />
           <MetricDeltaCard
             title="Median HH Income"
@@ -308,7 +321,7 @@ const History = () => {
                 <ResponsiveContainer width="100%" height={380}>
                   <LineChart data={formatChartData(macroData, 'unrate', 'snapshot_date')}>
                     <XAxis dataKey="date" />
-                    <YAxis />
+                    <YAxis tickFormatter={(value) => `${value.toFixed(1)}%`} />
                     <Tooltip 
                       formatter={(value: number) => [`${value.toFixed(1)}%`, 'Unemployment Rate']}
                       labelFormatter={(date) => `Date: ${date}`}

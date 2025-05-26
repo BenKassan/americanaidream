@@ -27,7 +27,7 @@ const FRED_SERIES = [
   { id: 'AWHMAN', title: 'Average Weekly Hours, Manufacturing (hours)' }
 ];
 
-// Helper function to fetch latest FRED data
+// Helper function to fetch latest FRED data with robust error handling
 async function latestFred(seriesId: string, fredApiKey: string) {
   const response = await fetch(
     `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${fredApiKey}&sort_order=desc&limit=1&file_type=json`
@@ -39,7 +39,12 @@ async function latestFred(seriesId: string, fredApiKey: string) {
   
   const data = await response.json();
   const obs = data.observations?.[0];
-  return obs && obs.value !== '.' ? parseFloat(obs.value) : null;
+  if (!obs || obs.value === '.' || obs.value === '' || obs.value === null) {
+    return null;
+  }
+  
+  const num = parseFloat(obs.value);
+  return isNaN(num) ? null : num;
 }
 
 Deno.serve(async (req) => {
@@ -98,7 +103,7 @@ Deno.serve(async (req) => {
       throw new Error('No articles found');
     }
 
-    // Fetch macro economic indicators
+    // Fetch macro economic indicators with robust error handling
     console.log('Fetching macro economic data from FRED...');
     
     try {
@@ -110,20 +115,24 @@ Deno.serve(async (req) => {
 
       console.log('Macro data fetched:', { unrate, medianIncome, gini });
 
-      // Insert macro snapshot
-      const { error: macroError } = await supabase
-        .from('macro_snapshots')
-        .insert({
-          unrate: unrate,
-          median_income: medianIncome,
-          gini_index: gini
-        });
+      // Insert macro snapshot only if we have at least one valid value
+      if (unrate !== null || medianIncome !== null || gini !== null) {
+        const { error: macroError } = await supabase
+          .from('macro_snapshots')
+          .insert({
+            unrate: unrate,
+            median_income: medianIncome,
+            gini_index: gini
+          });
 
-      if (macroError) {
-        console.error('Macro snapshot insert error:', macroError);
-        // Continue with analysis even if macro insert fails
+        if (macroError) {
+          console.error('Macro snapshot insert error:', macroError);
+          // Continue with analysis even if macro insert fails
+        } else {
+          console.log('Macro snapshot inserted successfully');
+        }
       } else {
-        console.log('Macro snapshot inserted successfully');
+        console.log('No valid macro data to insert');
       }
     } catch (macroError) {
       console.error('Macro data fetch failed:', macroError);
