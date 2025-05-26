@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
             content: `Analyze these recent news articles about AI's impact on labor markets and economics for data-driven insights:\n\n${articlesText}`
           }
         ],
-        temperature: 0.3,
+        temperature: 0.15,
         max_tokens: 2000
       })
     });

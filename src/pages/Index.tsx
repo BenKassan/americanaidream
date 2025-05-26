@@ -375,6 +375,15 @@ const Index = () => {
                 <div className="text-xs text-green-600 mt-1">New pathways to prosperity</div>
               </div>
             </div>
+
+            {/* Methodology */}
+            <p className="mt-6 text-xs md:text-sm text-gray-600 leading-relaxed">
+              <span className="font-semibold">How we calculate this 1-10 rating:</span><br/>
+              • <span className="font-medium">News Sentiment&nbsp;(40%)</span> – GPT-4o analyzes today's AI-economy headlines<br/>
+              • <span className="font-medium">Productivity vs Labor Score&nbsp;(30%)</span> – compares productivity gains to labor-market value<br/>
+              • <span className="font-medium">American Dream Score&nbsp;(30%)</span> – gauges upward mobility & opportunity<br/>
+              Weighted average is then scaled 1&nbsp;(critical disruption) to 10&nbsp;(transformative opportunity). We keep the model's temperature low (0.15) to minimise day-to-day volatility.
+            </p>
           </CardContent>
         </Card>
 
