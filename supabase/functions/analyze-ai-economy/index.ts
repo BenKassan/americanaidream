@@ -130,12 +130,18 @@ Deno.serve(async (req) => {
             content: `You are an economic analyst. Return ONLY valid JSON:
             {
               "rating": <1-10>,
-              "summary": "<≤300 chars>",
+              "summary": "<500-700 word essay>",
               "prod_labor_score": <0-100>,
               "prod_labor_tip": "<≤120 chars>",
               "american_dream_score": <0-100>,
               "american_dream_tooltip": "<≤120 chars>"
             }
+            
+            Writing guidance for summary (500–700 words ≈ 3,500–4,500 characters):
+            • Start with a concise thesis on AI's current economic influence.
+            • Dedicate the first half to real-time developments pulled from today's news (cite specific companies, policies, job numbers).
+            • Dedicate the second half to long-term structural themes: productivity, wage dynamics, education/training needs, regulation, demographic pressures, etc.—link them back to the fresh news.
+            • Close with 1–2 forward-looking sentences on plausible scenarios over the next 3-5 years.
             
             Scale – American Dream Score:
             0-40 = Low mobility & opportunity
@@ -148,7 +154,7 @@ Deno.serve(async (req) => {
             - Concrete examples of productivity gains vs. labor market effects
             - Specific policy responses and industry developments reported
             
-            Base your analysis strictly on the actual news content provided. Do not invent data or statistics.`
+            Base your analysis strictly on the actual news content provided. Do not invent data or statistics. Strictly no markdown or code-fences—pure JSON.`
           },
           {
             role: 'user',
@@ -156,7 +162,7 @@ Deno.serve(async (req) => {
           }
         ],
         temperature: 0.3,
-        max_tokens: 1500
+        max_tokens: 2000
       })
     });
 

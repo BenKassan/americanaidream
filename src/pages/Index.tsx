@@ -313,7 +313,7 @@ const Index = () => {
             </div>
 
             {/* Comprehensive Analysis */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm md:px-10 md:py-8 px-6 py-6 leading-[1.6] text-[0.95rem]">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center space-x-2">
                   <Users className="h-5 w-5 text-purple-600" />
