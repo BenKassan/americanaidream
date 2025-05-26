@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCcw, TrendingUp, Globe, Bot } from "lucide-react";
+import { RefreshCcw, TrendingUp, Briefcase, Flag, Factory, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -10,6 +11,8 @@ interface Report {
   id: string;
   rating: number;
   summary: string;
+  productivity_insight?: string;
+  american_dream_impact?: string;
   created_at: string;
 }
 
@@ -84,8 +87,8 @@ const Index = () => {
         }
         
         toast({
-          title: "Analysis completed successfully",
-          description: `Analyzed ${data.articlesAnalyzed} news articles and updated the economic impact rating`,
+          title: "Economic analysis updated",
+          description: `Analyzed ${data.articlesAnalyzed} news articles and updated the American Dream impact assessment`,
         });
       } else {
         throw new Error(data.error || 'Analysis failed');
@@ -102,46 +105,49 @@ const Index = () => {
     }
   };
 
-  const getRatingColor = (rating: number) => {
-    if (rating >= 8) return "bg-green-500";
-    if (rating >= 6) return "bg-yellow-500";
-    if (rating >= 4) return "bg-orange-500";
-    return "bg-red-500";
-  };
-
   const getRatingBadgeVariant = (rating: number) => {
     if (rating >= 8) return "default";
     if (rating >= 6) return "secondary";
     return "destructive";
   };
 
+  const getRatingDescription = (rating: number) => {
+    if (rating >= 8) return "Transformative Opportunity";
+    if (rating >= 6) return "Mixed Signals";
+    if (rating >= 4) return "Concerning Trends";
+    return "Critical Disruption";
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-center space-x-3">
-            <Globe className="h-8 w-8 text-blue-600" />
-            <Bot className="h-8 w-8 text-purple-600" />
-            <TrendingUp className="h-8 w-8 text-green-600" />
+      <header className="bg-white shadow-sm border-b border-blue-100">
+        <div className="max-w-5xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <Flag className="h-8 w-8 text-blue-600" />
+            <Factory className="h-8 w-8 text-red-600" />
+            <Briefcase className="h-8 w-8 text-blue-600" />
           </div>
-          <h1 className="text-4xl font-bold text-center mt-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            AI-Economy Monitor
+          <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 bg-clip-text text-transparent">
+            American Dream Monitor
           </h1>
           <p className="text-center text-gray-600 mt-2 text-lg">
-            Real-time analysis of AI's impact on global economics
+            AI's Impact on Work, Wages, and Economic Opportunity
+          </p>
+          <p className="text-center text-gray-500 mt-1 text-sm">
+            Real-time analysis of how artificial intelligence is reshaping the value of labor and the path to prosperity
           </p>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
         
         {/* Rating Badge Section */}
         <div className="text-center">
-          <div className="inline-flex items-center space-x-4 bg-white rounded-2xl shadow-lg border p-8">
+          <div className="inline-flex flex-col items-center space-y-3 bg-white rounded-2xl shadow-lg border p-8">
             <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-              Current Impact Rating
+              American Dream Impact Score
             </div>
             <Badge 
               variant={latestReport ? getRatingBadgeVariant(latestReport.rating) : "secondary"}
@@ -149,27 +155,69 @@ const Index = () => {
             >
               {latestReport?.rating || "—"} / 10
             </Badge>
+            <div className="text-sm text-gray-600 font-medium">
+              {latestReport ? getRatingDescription(latestReport.rating) : "No Data Available"}
+            </div>
           </div>
         </div>
 
-        {/* Summary Card */}
+        {/* Key Insights Grid */}
         {latestReport && (
-          <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center space-x-2">
-                <Bot className="h-5 w-5 text-blue-600" />
-                <span>Executive Summary</span>
-              </CardTitle>
-              <CardDescription>
-                AI economic impact analysis • Last updated {lastUpdated}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="prose prose-slate max-w-none">
-              <div className="whitespace-pre-line text-gray-700 leading-relaxed">
-                {latestReport.summary}
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Productivity vs Labor Value */}
+              {latestReport.productivity_insight && (
+                <Card className="shadow-lg border-0 bg-gradient-to-br from-orange-50 to-red-50">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center space-x-2 text-orange-800">
+                      <Factory className="h-5 w-5" />
+                      <span>Productivity vs. Labor Value</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-orange-700 leading-relaxed">
+                      {latestReport.productivity_insight}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* American Dream Impact */}
+              {latestReport.american_dream_impact && (
+                <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-purple-50">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center space-x-2 text-blue-800">
+                      <Flag className="h-5 w-5" />
+                      <span>American Dream Impact</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-blue-700 leading-relaxed">
+                      {latestReport.american_dream_impact}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Comprehensive Analysis */}
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center space-x-2">
+                  <Users className="h-5 w-5 text-purple-600" />
+                  <span>Economic Analysis</span>
+                </CardTitle>
+                <CardDescription>
+                  Expert assessment by Dr. Elena Rodriguez • Last updated {lastUpdated}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="prose prose-slate max-w-none">
+                <div className="whitespace-pre-line text-gray-700 leading-relaxed text-base">
+                  {latestReport.summary}
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )}
 
         {!latestReport && (
@@ -177,7 +225,7 @@ const Index = () => {
             <CardHeader>
               <CardTitle>No Analysis Available</CardTitle>
               <CardDescription>
-                Click "Refresh Analysis" to generate the first AI economic impact report
+                Click "Generate Analysis" to create the first American Dream impact assessment
               </CardDescription>
             </CardHeader>
           </Card>
@@ -188,22 +236,31 @@ const Index = () => {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="h-5 w-5 text-green-600" />
-              <span>Rating Scale</span>
+              <span>Impact Assessment Scale</span>
             </CardTitle>
+            <CardDescription>How AI affects traditional American ideals of work and prosperity</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="text-center p-4 rounded-lg bg-red-50 border border-red-200">
-                <div className="text-2xl font-bold text-red-600">1-3</div>
-                <div className="text-sm text-red-700">Negative Impact</div>
+                <div className="text-xl font-bold text-red-600">1-3</div>
+                <div className="text-sm text-red-700 font-medium">Critical Disruption</div>
+                <div className="text-xs text-red-600 mt-1">Severe job displacement, wage stagnation</div>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-orange-50 border border-orange-200">
+                <div className="text-xl font-bold text-orange-600">4-5</div>
+                <div className="text-sm text-orange-700 font-medium">Concerning Trends</div>
+                <div className="text-xs text-orange-600 mt-1">Notable labor market challenges</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-                <div className="text-2xl font-bold text-yellow-600">4-7</div>
-                <div className="text-sm text-yellow-700">Mixed Signals</div>
+                <div className="text-xl font-bold text-yellow-600">6-7</div>
+                <div className="text-sm text-yellow-700 font-medium">Mixed Signals</div>
+                <div className="text-xs text-yellow-600 mt-1">Some opportunities, some challenges</div>
               </div>
               <div className="text-center p-4 rounded-lg bg-green-50 border border-green-200">
-                <div className="text-2xl font-bold text-green-600">8-10</div>
-                <div className="text-sm text-green-700">Strong Positive</div>
+                <div className="text-xl font-bold text-green-600">8-10</div>
+                <div className="text-sm text-green-700 font-medium">Transformative Opportunity</div>
+                <div className="text-xs text-green-600 mt-1">New pathways to prosperity</div>
               </div>
             </div>
           </CardContent>
@@ -218,37 +275,16 @@ const Index = () => {
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-full shadow-lg transition-all duration-200 transform hover:scale-105"
           >
             <RefreshCcw className={`h-5 w-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Analyzing News...' : 'Refresh Analysis'}
+            {isLoading ? 'Analyzing Economic Data...' : 'Generate New Analysis'}
           </Button>
         </div>
-
-        {/* Status Card */}
-        <Card className="shadow-lg border-2 border-green-200 bg-green-50/50">
-          <CardHeader>
-            <CardTitle className="text-green-800">✅ System Ready</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3 text-green-700">
-              <p><strong>Connected Services:</strong></p>
-              <ul className="list-disc list-inside space-y-1 ml-4">
-                <li>✅ Supabase Database - Connected</li>
-                <li>✅ NewsAPI - Configured</li>
-                <li>✅ OpenAI GPT-4 - Configured</li>
-                <li>✅ Real-time Analysis - Ready</li>
-              </ul>
-              <p className="text-sm bg-green-100 p-3 rounded-lg mt-4">
-                🎉 Your AI-Economy Monitor is fully operational! Click "Refresh Analysis" to get the latest economic impact assessment.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
 
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t mt-16">
-        <div className="max-w-4xl mx-auto px-6 py-8 text-center text-gray-500">
-          <p>AI-Economy Monitor • Powered by OpenAI & NewsAPI • Built with Lovable</p>
+      <footer className="bg-white border-t border-gray-200 mt-16">
+        <div className="max-w-5xl mx-auto px-6 py-8 text-center text-gray-500">
+          <p>American Dream Monitor • Economic Analysis by AI • Tracking Labor & Productivity Trends</p>
         </div>
       </footer>
     </div>

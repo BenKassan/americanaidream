@@ -41,10 +41,10 @@ Deno.serve(async (req) => {
     // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch AI-related news from NewsAPI
+    // Fetch AI-related news with focus on labor and productivity
     console.log('Fetching news from NewsAPI...');
     const newsResponse = await fetch(
-      `https://newsapi.org/v2/everything?q=artificial intelligence economy OR AI economic impact OR automation jobs&sortBy=publishedAt&pageSize=20&language=en`,
+      `https://newsapi.org/v2/everything?q=(artificial intelligence OR AI) AND (jobs OR employment OR productivity OR automation OR wages OR labor) AND (economy OR economic)&sortBy=publishedAt&pageSize=25&language=en`,
       {
         headers: {
           'X-API-Key': newsApiKey
@@ -66,11 +66,11 @@ Deno.serve(async (req) => {
     }
 
     // Prepare content for OpenAI analysis
-    const articlesText = articles.slice(0, 10).map(article => 
-      `Title: ${article.title}\nDescription: ${article.description || 'No description'}\n`
+    const articlesText = articles.slice(0, 15).map(article => 
+      `Title: ${article.title}\nDescription: ${article.description || 'No description'}\nDate: ${article.publishedAt}\n`
     ).join('\n---\n');
 
-    // Analyze with OpenAI using JSON mode
+    // Enhanced analysis with OpenAI using JSON mode
     console.log('Analyzing with OpenAI...');
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -79,25 +79,35 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
-            content: `You are an AI economist analyzing the economic impact of artificial intelligence. 
+            content: `You are Dr. Elena Rodriguez, a world-renowned economist and leading expert on technological disruption and labor markets. You have published extensively on AI's impact on the American Dream, labor value, and economic inequality. 
+
+            Analyze the provided news articles with the depth and insight of a Nobel Prize-caliber economist. Focus specifically on:
+            - How AI is reshaping the traditional American Dream of upward mobility through work
+            - The divergence between productivity gains and labor compensation
+            - Data-driven trends in job displacement vs. job creation
+            - The changing value and meaning of human labor
+            - Economic implications for middle-class prosperity
+
             Return ONLY valid JSON with exactly these keys:
-            - rating: number between 1-10 (1 = very negative economic impact, 10 = very positive economic impact)
-            - summary: string with detailed analysis (maximum 500 characters)
+            - rating: number between 1-10 (1 = catastrophic for American workers/Dream, 10 = transformative opportunity)
+            - summary: comprehensive analysis (800-1000 characters) that includes specific economic insights, data trends, and implications for the American workforce
+            - productivity_insight: brief insight on productivity vs. labor value trends (200-250 characters)
+            - american_dream_impact: assessment of impact on traditional American Dream ideals (200-250 characters)
             
-            Do not include any markdown, code blocks, or additional text. Return only the JSON object.`
+            Write with the authority and depth expected from a top-tier economist. Include data-driven observations and nuanced economic analysis.`
           },
           {
             role: 'user',
-            content: `Analyze these recent AI and economy related news articles and provide an economic impact rating:\n\n${articlesText}`
+            content: `Analyze these recent AI and labor market articles for their economic implications on American workers and the evolving nature of work:\n\n${articlesText}`
           }
         ],
-        temperature: 0.4,
-        max_tokens: 800
+        temperature: 0.3,
+        max_tokens: 1500
       })
     });
 
@@ -118,7 +128,7 @@ Deno.serve(async (req) => {
       analysis = JSON.parse(cleanedContent);
       
       // Validate the required fields
-      if (!analysis.rating || !analysis.summary) {
+      if (!analysis.rating || !analysis.summary || !analysis.productivity_insight || !analysis.american_dream_impact) {
         throw new Error('Missing required fields in AI response');
       }
       
@@ -146,12 +156,14 @@ Deno.serve(async (req) => {
 
     console.log('Analysis completed, storing in database...');
 
-    // Store the analysis in Supabase
+    // Store the enhanced analysis in Supabase
     const { data, error } = await supabase
       .from('reports')
       .insert({
         rating: analysis.rating,
-        summary: analysis.summary
+        summary: analysis.summary,
+        productivity_insight: analysis.productivity_insight,
+        american_dream_impact: analysis.american_dream_impact
       })
       .select()
       .single();
