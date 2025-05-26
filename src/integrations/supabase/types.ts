@@ -16,6 +16,9 @@ export type Database = {
           id: string
           productivity_insight: string | null
           rating: number
+          series_data: Json | null
+          series_id: string | null
+          series_title: string | null
           summary: string
         }
         Insert: {
@@ -24,6 +27,9 @@ export type Database = {
           id?: string
           productivity_insight?: string | null
           rating: number
+          series_data?: Json | null
+          series_id?: string | null
+          series_title?: string | null
           summary: string
         }
         Update: {
@@ -32,6 +38,9 @@ export type Database = {
           id?: string
           productivity_insight?: string | null
           rating?: number
+          series_data?: Json | null
+          series_id?: string | null
+          series_title?: string | null
           summary?: string
         }
         Relationships: []

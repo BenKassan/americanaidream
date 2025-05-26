@@ -13,6 +13,20 @@ interface NewsArticle {
   publishedAt: string;
 }
 
+interface SeriesData {
+  date: string;
+  value: number;
+}
+
+// FRED economic series pool for random selection
+const FRED_SERIES = [
+  { id: 'UNRATE', title: 'US Unemployment Rate (%)' },
+  { id: 'INDPRO', title: 'Industrial Production Index (2017=100)' },
+  { id: 'PAYEMS', title: 'Total Non-farm Payroll Employment (thousands)' },
+  { id: 'CES0500000003', title: 'Average Hourly Earnings, Total Private ($)' },
+  { id: 'AWHMAN', title: 'Average Weekly Hours, Manufacturing (hours)' }
+];
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -27,6 +41,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const newsApiKey = Deno.env.get('NEWS_API_KEY');
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    const fredApiKey = Deno.env.get('FRED_API_KEY');
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Supabase configuration missing');
@@ -36,6 +51,9 @@ Deno.serve(async (req) => {
     }
     if (!openaiApiKey) {
       throw new Error('OPENAI_API_KEY not configured');
+    }
+    if (!fredApiKey) {
+      throw new Error('FRED_API_KEY not configured');
     }
 
     // Initialize Supabase client
@@ -64,6 +82,31 @@ Deno.serve(async (req) => {
     if (articles.length === 0) {
       throw new Error('No articles found');
     }
+
+    // Select random FRED series for this analysis
+    const selectedSeries = FRED_SERIES[Math.floor(Math.random() * FRED_SERIES.length)];
+    console.log(`Selected FRED series: ${selectedSeries.id} - ${selectedSeries.title}`);
+
+    // Fetch FRED economic data
+    console.log('Fetching FRED economic data...');
+    const fredResponse = await fetch(
+      `https://api.stlouisfed.org/fred/series/observations?series_id=${selectedSeries.id}&api_key=${fredApiKey}&file_type=json&observation_start=2015-01-01`
+    );
+
+    if (!fredResponse.ok) {
+      throw new Error(`FRED API error: ${fredResponse.status}`);
+    }
+
+    const fredData = await fredResponse.json();
+    const seriesData: SeriesData[] = fredData.observations
+      ?.filter((obs: any) => obs.value !== '.' && !isNaN(parseFloat(obs.value)))
+      ?.map((obs: any) => ({
+        date: obs.date,
+        value: parseFloat(obs.value)
+      }))
+      ?.slice(-60) || []; // Last ~5 years of monthly data
+
+    console.log(`Fetched ${seriesData.length} FRED data points`);
 
     // Prepare content for OpenAI analysis
     const articlesText = articles.slice(0, 15).map(article => 
@@ -155,14 +198,17 @@ Deno.serve(async (req) => {
 
     console.log('Analysis completed, storing in database...');
 
-    // Store the analysis in Supabase
+    // Store the analysis in Supabase with FRED data
     const { data, error } = await supabase
       .from('reports')
       .insert({
         rating: analysis.rating,
         summary: analysis.summary,
         productivity_insight: analysis.productivity_insight,
-        american_dream_impact: analysis.american_dream_impact
+        american_dream_impact: analysis.american_dream_impact,
+        series_id: selectedSeries.id,
+        series_title: selectedSeries.title,
+        series_data: seriesData
       })
       .select()
       .single();
@@ -188,7 +234,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         report: data,
-        articlesAnalyzed: articles.length 
+        articlesAnalyzed: articles.length,
+        fredSeries: selectedSeries.title
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

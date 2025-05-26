@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { RefreshCcw, TrendingUp, Briefcase, Flag, Factory, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import GraphicOfDay from "@/components/GraphicOfDay";
 
 interface Report {
   id: string;
@@ -13,6 +14,9 @@ interface Report {
   summary: string;
   productivity_insight?: string;
   american_dream_impact?: string;
+  series_id?: string;
+  series_title?: string;
+  series_data?: Array<{ date: string; value: number }>;
   created_at: string;
 }
 
@@ -88,7 +92,7 @@ const Index = () => {
         
         toast({
           title: "Economic analysis updated",
-          description: `Analyzed ${data.articlesAnalyzed} news articles and updated the American Dream impact assessment`,
+          description: `Analyzed ${data.articlesAnalyzed} news articles${data.fredSeries ? ` and loaded ${data.fredSeries} economic data` : ''}`,
         });
       } else {
         throw new Error(data.error || 'Analysis failed');
@@ -160,6 +164,12 @@ const Index = () => {
             </div>
           </div>
         </div>
+
+        {/* Graphic of the Day */}
+        <GraphicOfDay 
+          title={latestReport?.series_title}
+          seriesData={latestReport?.series_data}
+        />
 
         {/* Key Insights Grid */}
         {latestReport && (
