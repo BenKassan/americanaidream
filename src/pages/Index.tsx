@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { RefreshCcw, TrendingUp, Briefcase, Flag, Factory, Users } from "lucide-
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import GraphicOfDay from "@/components/GraphicOfDay";
+import Navigation from "@/components/Navigation";
 
 interface SeriesData {
   date: string;
@@ -185,229 +185,233 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-blue-100">
-        <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <Flag className="h-8 w-8 text-blue-600" />
-            <Factory className="h-8 w-8 text-red-600" />
-            <Briefcase className="h-8 w-8 text-blue-600" />
-          </div>
-          <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 bg-clip-text text-transparent">
-            American Dream Monitor
-          </h1>
-          <p className="text-center text-gray-600 mt-2 text-lg">
-            AI's Impact on Work, Wages, and Economic Opportunity
-          </p>
-          <p className="text-center text-gray-500 mt-1 text-sm">
-            Real-time analysis of how artificial intelligence is reshaping the value of labor and the path to prosperity
-          </p>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        <Navigation />
         
-        {/* Rating Badge Section */}
-        <div className="text-center">
-          <div className="inline-flex flex-col items-center space-y-3 bg-white rounded-2xl shadow-lg border p-8">
-            <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-              American Dream Impact Score
+        {/* Hero Section */}
+        <header className="bg-white shadow-sm border-b border-blue-100">
+          <div className="max-w-5xl mx-auto px-6 py-8">
+            <div className="flex items-center justify-center space-x-3 mb-4">
+              <Flag className="h-8 w-8 text-blue-600" />
+              <Factory className="h-8 w-8 text-red-600" />
+              <Briefcase className="h-8 w-8 text-blue-600" />
             </div>
-            <Badge 
-              variant={latestReport ? getRatingBadgeVariant(latestReport.rating) : "secondary"}
-              className="text-4xl font-bold px-6 py-3 rounded-full"
-            >
-              {latestReport?.rating || "—"} / 10
-            </Badge>
-            <div className="text-sm text-gray-600 font-medium">
-              {latestReport ? getRatingDescription(latestReport.rating) : "No Data Available"}
+            <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-blue-600 via-purple-600 to-red-600 bg-clip-text text-transparent">
+              American Dream Monitor
+            </h1>
+            <p className="text-center text-gray-600 mt-2 text-lg">
+              AI's Impact on Work, Wages, and Economic Opportunity
+            </p>
+            <p className="text-center text-gray-500 mt-1 text-sm">
+              Real-time analysis of how artificial intelligence is reshaping the value of labor and the path to prosperity
+            </p>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+          
+          {/* Rating Badge Section */}
+          <div className="text-center">
+            <div className="inline-flex flex-col items-center space-y-3 bg-white rounded-2xl shadow-lg border p-8">
+              <div className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+                American Dream Impact Score
+              </div>
+              <Badge 
+                variant={latestReport ? getRatingBadgeVariant(latestReport.rating) : "secondary"}
+                className="text-4xl font-bold px-6 py-3 rounded-full"
+              >
+                {latestReport?.rating || "—"} / 10
+              </Badge>
+              <div className="text-sm text-gray-600 font-medium">
+                {latestReport ? getRatingDescription(latestReport.rating) : "No Data Available"}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Graphic of the Day */}
-        <GraphicOfDay 
-          title={latestReport?.series_title}
-          seriesData={latestReport?.series_data}
-        />
+          {/* Graphic of the Day */}
+          <GraphicOfDay 
+            title={latestReport?.series_title}
+            seriesData={latestReport?.series_data}
+          />
 
-        {/* Key Insights Grid */}
-        {latestReport && (
-          <>
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Productivity vs Labor Value Score */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-orange-50 to-red-50">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-orange-800">
-                    <Factory className="h-5 w-5" />
-                    <span>Productivity vs. Labor Value</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow">
-                    <span className="text-sm uppercase tracking-wide text-gray-500">
-                      Productivity vs Labor Value
-                    </span>
-                    <span className={`mt-2 text-5xl font-bold ${latestReport.prod_labor_score !== undefined ? getScoreColor(latestReport.prod_labor_score) : 'text-gray-400'}`}>
-                      {latestReport.prod_labor_score ?? '—'}
-                    </span>
-                    <span className="text-xs text-gray-500 mt-1">Score /100</span>
-                    <p className="text-center text-gray-600 mt-3 text-sm">
-                      {latestReport.prod_labor_tooltip || 'No analysis available'}
-                    </p>
-                    <div className="mt-4 pt-3 border-t border-gray-200 w-full">
-                      <div className="text-xs text-gray-500 space-y-1">
-                        <div><span className="text-green-600 font-medium">High (71-100):</span> Labor value rises with productivity</div>
-                        <div><span className="text-yellow-600 font-medium">Mid (41-70):</span> Mixed impact on labor value</div>
-                        <div><span className="text-red-600 font-medium">Low (0-40):</span> Productivity outpaces labor value</div>
+          {/* Key Insights Grid */}
+          {latestReport && (
+            <>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Productivity vs Labor Value Score */}
+                <Card className="shadow-lg border-0 bg-gradient-to-br from-orange-50 to-red-50">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center space-x-2 text-orange-800">
+                      <Factory className="h-5 w-5" />
+                      <span>Productivity vs. Labor Value</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center p-6 bg-white rounded-xl shadow">
+                      <span className="text-sm uppercase tracking-wide text-gray-500">
+                        Productivity vs Labor Value
+                      </span>
+                      <span className={`mt-2 text-5xl font-bold ${latestReport.prod_labor_score !== undefined ? getScoreColor(latestReport.prod_labor_score) : 'text-gray-400'}`}>
+                        {latestReport.prod_labor_score ?? '—'}
+                      </span>
+                      <span className="text-xs text-gray-500 mt-1">Score /100</span>
+                      <p className="text-center text-gray-600 mt-3 text-sm">
+                        {latestReport.prod_labor_tooltip || 'No analysis available'}
+                      </p>
+                      <div className="mt-4 pt-3 border-t border-gray-200 w-full">
+                        <div className="text-xs text-gray-500 space-y-1">
+                          <div><span className="text-green-600 font-medium">High (71-100):</span> Labor value rises with productivity</div>
+                          <div><span className="text-yellow-600 font-medium">Mid (41-70):</span> Mixed impact on labor value</div>
+                          <div><span className="text-red-600 font-medium">Low (0-40):</span> Productivity outpaces labor value</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* American Dream Score */}
-              <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-purple-50">
+                {/* American Dream Score */}
+                <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-purple-50">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center space-x-2 text-blue-800">
+                      <Flag className="h-5 w-5" />
+                      <span>American Dream Score</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center p-6 bg-blue-50 rounded-xl shadow">
+                      <span className="text-sm uppercase tracking-wide text-blue-700">
+                        American Dream Score
+                      </span>
+                      {(() => {
+                        const dream = latestReport?.american_dream_score ?? null;
+                        const dreamTip = latestReport?.american_dream_tooltip ?? "—";
+                        const dreamClass = dream === null ? "text-gray-400"
+                          : dream <= 40 ? "text-red-600"
+                          : dream <= 70 ? "text-yellow-600"
+                          : "text-green-600";
+                        
+                        return (
+                          <>
+                            <span className={`mt-2 text-5xl font-bold ${dreamClass}`}>
+                              {dream ?? "—"}
+                            </span>
+                            <span className="text-xs text-blue-700 mt-1">Score /100</span>
+                            <p className="text-center text-blue-800 mt-3 text-sm">{dreamTip}</p>
+                            
+                            {/* Legend */}
+                            <hr className="my-4 w-full border-blue-100" />
+                            <ul className="text-xs leading-5 text-blue-800 space-y-1">
+                              <li><span className="font-semibold text-green-600">High (71-100):</span> strong mobility, abundant opportunity</li>
+                              <li><span className="font-semibold text-yellow-600">Mid (41-70):</span> mixed signals</li>
+                              <li><span className="font-semibold text-red-600">Low (0-40):</span> limited mobility & bleak outlook</li>
+                            </ul>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Comprehensive Analysis */}
+              <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm md:px-10 md:py-8 px-6 py-6 leading-[1.6] text-[0.95rem]">
                 <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center space-x-2 text-blue-800">
-                    <Flag className="h-5 w-5" />
-                    <span>American Dream Score</span>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Users className="h-5 w-5 text-purple-600" />
+                    <span>Data-Driven Economic Analysis</span>
                   </CardTitle>
+                  <CardDescription>
+                    AI analysis based on current news data • Last updated {lastUpdated}
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col items-center p-6 bg-blue-50 rounded-xl shadow">
-                    <span className="text-sm uppercase tracking-wide text-blue-700">
-                      American Dream Score
-                    </span>
-                    {(() => {
-                      const dream = latestReport?.american_dream_score ?? null;
-                      const dreamTip = latestReport?.american_dream_tooltip ?? "—";
-                      const dreamClass = dream === null ? "text-gray-400"
-                        : dream <= 40 ? "text-red-600"
-                        : dream <= 70 ? "text-yellow-600"
-                        : "text-green-600";
-                      
-                      return (
-                        <>
-                          <span className={`mt-2 text-5xl font-bold ${dreamClass}`}>
-                            {dream ?? "—"}
-                          </span>
-                          <span className="text-xs text-blue-700 mt-1">Score /100</span>
-                          <p className="text-center text-blue-800 mt-3 text-sm">{dreamTip}</p>
-                          
-                          {/* Legend */}
-                          <hr className="my-4 w-full border-blue-100" />
-                          <ul className="text-xs leading-5 text-blue-800 space-y-1">
-                            <li><span className="font-semibold text-green-600">High (71-100):</span> strong mobility, abundant opportunity</li>
-                            <li><span className="font-semibold text-yellow-600">Mid (41-70):</span> mixed signals</li>
-                            <li><span className="font-semibold text-red-600">Low (0-40):</span> limited mobility & bleak outlook</li>
-                          </ul>
-                        </>
-                      );
-                    })()}
+                <CardContent className="prose prose-slate max-w-none">
+                  <div className="whitespace-pre-line text-gray-700 leading-relaxed text-base">
+                    {latestReport.summary}
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </>
+          )}
 
-            {/* Comprehensive Analysis */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm md:px-10 md:py-8 px-6 py-6 leading-[1.6] text-[0.95rem]">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-purple-600" />
-                  <span>Data-Driven Economic Analysis</span>
-                </CardTitle>
+          {!latestReport && (
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>No Analysis Available</CardTitle>
                 <CardDescription>
-                  AI analysis based on current news data • Last updated {lastUpdated}
+                  Click "Generate Analysis" to create the first American Dream impact assessment based on current news data
                 </CardDescription>
               </CardHeader>
-              <CardContent className="prose prose-slate max-w-none">
-                <div className="whitespace-pre-line text-gray-700 leading-relaxed text-base">
-                  {latestReport.summary}
-                </div>
-              </CardContent>
             </Card>
-          </>
-        )}
+          )}
 
-        {!latestReport && (
+          {/* Rating Scale */}
           <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>No Analysis Available</CardTitle>
-              <CardDescription>
-                Click "Generate Analysis" to create the first American Dream impact assessment based on current news data
-              </CardDescription>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+                <span>Impact Assessment Scale</span>
+              </CardTitle>
+              <CardDescription>How AI affects traditional American ideals of work and prosperity</CardDescription>
             </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 rounded-lg bg-red-50 border border-red-200">
+                  <div className="text-xl font-bold text-red-600">1-3</div>
+                  <div className="text-sm text-red-700 font-medium">Critical Disruption</div>
+                  <div className="text-xs text-red-600 mt-1">Severe job displacement, wage stagnation</div>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-orange-50 border border-orange-200">
+                  <div className="text-xl font-bold text-orange-600">4-5</div>
+                  <div className="text-sm text-orange-700 font-medium">Concerning Trends</div>
+                  <div className="text-xs text-orange-600 mt-1">Notable labor market challenges</div>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-yellow-50 border border-yellow-200">
+                  <div className="text-xl font-bold text-yellow-600">6-7</div>
+                  <div className="text-sm text-yellow-700 font-medium">Mixed Signals</div>
+                  <div className="text-xs text-yellow-600 mt-1">Some opportunities, some challenges</div>
+                </div>
+                <div className="text-center p-4 rounded-lg bg-green-50 border border-green-200">
+                  <div className="text-xl font-bold text-green-600">8-10</div>
+                  <div className="text-sm text-green-700 font-medium">Transformative Opportunity</div>
+                  <div className="text-xs text-green-600 mt-1">New pathways to prosperity</div>
+                </div>
+              </div>
+
+              {/* Methodology */}
+              <p className="mt-6 text-xs md:text-sm text-gray-600 leading-relaxed">
+                <span className="font-semibold">How we calculate this 1-10 rating:</span><br/>
+                • <span className="font-medium">News Sentiment&nbsp;(40%)</span> – GPT-4o analyzes today's AI-economy headlines<br/>
+                • <span className="font-medium">Productivity vs Labor Score&nbsp;(30%)</span> – compares productivity gains to labor-market value<br/>
+                • <span className="font-medium">American Dream Score&nbsp;(30%)</span> – gauges upward mobility & opportunity<br/>
+                Weighted average is then scaled 1&nbsp;(critical disruption) to 10&nbsp;(transformative opportunity). We keep the model's temperature low (0.15) to minimise day-to-day volatility.
+              </p>
+            </CardContent>
           </Card>
-        )}
 
-        {/* Rating Scale */}
-        <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              <span>Impact Assessment Scale</span>
-            </CardTitle>
-            <CardDescription>How AI affects traditional American ideals of work and prosperity</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 rounded-lg bg-red-50 border border-red-200">
-                <div className="text-xl font-bold text-red-600">1-3</div>
-                <div className="text-sm text-red-700 font-medium">Critical Disruption</div>
-                <div className="text-xs text-red-600 mt-1">Severe job displacement, wage stagnation</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-orange-50 border border-orange-200">
-                <div className="text-xl font-bold text-orange-600">4-5</div>
-                <div className="text-sm text-orange-700 font-medium">Concerning Trends</div>
-                <div className="text-xs text-orange-600 mt-1">Notable labor market challenges</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-                <div className="text-xl font-bold text-yellow-600">6-7</div>
-                <div className="text-sm text-yellow-700 font-medium">Mixed Signals</div>
-                <div className="text-xs text-yellow-600 mt-1">Some opportunities, some challenges</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-green-50 border border-green-200">
-                <div className="text-xl font-bold text-green-600">8-10</div>
-                <div className="text-sm text-green-700 font-medium">Transformative Opportunity</div>
-                <div className="text-xs text-green-600 mt-1">New pathways to prosperity</div>
-              </div>
-            </div>
+          {/* Control Panel */}
+          <div className="flex justify-center">
+            <Button 
+              onClick={handleRefresh}
+              disabled={isLoading}
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-full shadow-lg transition-all duration-200 transform hover:scale-105"
+            >
+              <RefreshCcw className={`h-5 w-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? 'Analyzing Economic Data...' : 'Generate New Analysis'}
+            </Button>
+          </div>
 
-            {/* Methodology */}
-            <p className="mt-6 text-xs md:text-sm text-gray-600 leading-relaxed">
-              <span className="font-semibold">How we calculate this 1-10 rating:</span><br/>
-              • <span className="font-medium">News Sentiment&nbsp;(40%)</span> – GPT-4o analyzes today's AI-economy headlines<br/>
-              • <span className="font-medium">Productivity vs Labor Score&nbsp;(30%)</span> – compares productivity gains to labor-market value<br/>
-              • <span className="font-medium">American Dream Score&nbsp;(30%)</span> – gauges upward mobility & opportunity<br/>
-              Weighted average is then scaled 1&nbsp;(critical disruption) to 10&nbsp;(transformative opportunity). We keep the model's temperature low (0.15) to minimise day-to-day volatility.
-            </p>
-          </CardContent>
-        </Card>
+        </main>
 
-        {/* Control Panel */}
-        <div className="flex justify-center">
-          <Button 
-            onClick={handleRefresh}
-            disabled={isLoading}
-            size="lg"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 rounded-full shadow-lg transition-all duration-200 transform hover:scale-105"
-          >
-            <RefreshCcw className={`h-5 w-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Analyzing Economic Data...' : 'Generate New Analysis'}
-          </Button>
-        </div>
-
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-16">
-        <div className="max-w-5xl mx-auto px-6 py-8 text-center text-gray-500">
-          <p>American Dream Monitor • AI Analysis Based on Real News Data • Tracking Labor & Productivity Trends</p>
-        </div>
-      </footer>
+        {/* Footer */}
+        <footer className="bg-white border-t border-gray-200 mt-16">
+          <div className="max-w-5xl mx-auto px-6 py-8 text-center text-gray-500">
+            <p>American Dream Monitor • AI Analysis Based on Real News Data • Tracking Labor & Productivity Trends</p>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };
