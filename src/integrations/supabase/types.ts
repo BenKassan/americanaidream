@@ -9,6 +9,27 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      macro_snapshots: {
+        Row: {
+          gini_index: number | null
+          median_income: number | null
+          snapshot_date: string
+          unrate: number | null
+        }
+        Insert: {
+          gini_index?: number | null
+          median_income?: number | null
+          snapshot_date?: string
+          unrate?: number | null
+        }
+        Update: {
+          gini_index?: number | null
+          median_income?: number | null
+          snapshot_date?: string
+          unrate?: number | null
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           american_dream_impact: string | null

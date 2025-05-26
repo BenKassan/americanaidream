@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 
 interface ReportData {
@@ -15,16 +15,32 @@ interface ReportData {
   american_dream_score: number | null;
 }
 
+interface MacroData {
+  snapshot_date: string;
+  unrate: number | null;
+  median_income: number | null;
+  gini_index: number | null;
+}
+
 interface MetricDeltaCardProps {
   title: string;
   latestValue: number | null;
   deltaValue: number | null;
+  isPositiveGood?: boolean;
+  formatValue?: (value: number) => string;
 }
 
-const MetricDeltaCard = ({ title, latestValue, deltaValue }: MetricDeltaCardProps) => {
+const MetricDeltaCard = ({ 
+  title, 
+  latestValue, 
+  deltaValue, 
+  isPositiveGood = true,
+  formatValue 
+}: MetricDeltaCardProps) => {
   const getDeltaColor = (delta: number | null) => {
     if (delta === null || delta === 0) return 'text-gray-600';
-    return delta > 0 ? 'text-green-600' : 'text-red-600';
+    const isGood = isPositiveGood ? delta > 0 : delta < 0;
+    return isGood ? 'text-green-600' : 'text-red-600';
   };
 
   const getDeltaIcon = (delta: number | null) => {
@@ -32,12 +48,16 @@ const MetricDeltaCard = ({ title, latestValue, deltaValue }: MetricDeltaCardProp
     return delta > 0 ? '▲' : '▼';
   };
 
+  const formattedValue = latestValue !== null && formatValue 
+    ? formatValue(latestValue) 
+    : latestValue?.toFixed(1) ?? '—';
+
   return (
     <Card className="shadow-lg">
       <CardContent className="p-6 text-center">
         <h3 className="text-sm font-medium text-gray-500">{title}</h3>
         <div className="mt-2 flex justify-center gap-4 items-end">
-          <span className="text-4xl font-bold">{latestValue?.toFixed(1) ?? '—'}</span>
+          <span className="text-4xl font-bold">{formattedValue}</span>
           <span className={`text-lg font-semibold ${getDeltaColor(deltaValue)}`}>
             {getDeltaIcon(deltaValue)} {deltaValue !== null ? Math.abs(deltaValue).toFixed(1) : '—'}
           </span>
@@ -49,30 +69,43 @@ const MetricDeltaCard = ({ title, latestValue, deltaValue }: MetricDeltaCardProp
 };
 
 const History = () => {
-  const [data, setData] = useState<ReportData[]>([]);
+  const [reportData, setReportData] = useState<ReportData[]>([]);
+  const [macroData, setMacroData] = useState<MacroData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: reports, error } = await supabase
-          .from('reports')
-          .select(`
-            created_at,
-            rating,
-            prod_labor_score,
-            american_dream_score
-          `)
-          .order('created_at', { ascending: true });
+        const [{ data: reports, error: reportsError }, { data: macros, error: macrosError }] = await Promise.all([
+          supabase
+            .from('reports')
+            .select(`
+              created_at,
+              rating,
+              prod_labor_score,
+              american_dream_score
+            `)
+            .order('created_at', { ascending: true }),
+          supabase
+            .from('macro_snapshots')
+            .select('*')
+            .order('snapshot_date', { ascending: true })
+        ]);
 
-        if (error) {
-          console.error('Supabase error:', error);
-          setError(error.message);
+        if (reportsError) {
+          console.error('Reports error:', reportsError);
+          setError(reportsError.message);
           return;
         }
 
-        setData(reports || []);
+        if (macrosError) {
+          console.error('Macros error:', macrosError);
+          // Continue even if macro data fails
+        }
+
+        setReportData(reports || []);
+        setMacroData(macros || []);
       } catch (err) {
         console.error('Fetch error:', err);
         setError('Failed to fetch data');
@@ -89,18 +122,23 @@ const History = () => {
     return b - a;
   };
 
-  const baseline = data.find(r => new Date(r.created_at) >= new Date('2025-01-01'));
-  const latest = data[data.length - 1];
+  const reportsBaseline = reportData.find(r => new Date(r.created_at) >= new Date('2025-01-01'));
+  const reportsLatest = reportData[reportData.length - 1];
+  
+  const macroBaseline = macroData.find(r => new Date(r.snapshot_date) >= new Date('2025-01-01'));
+  const macroLatest = macroData[macroData.length - 1];
 
-  const formatChartData = (key: keyof ReportData) => {
+  const formatChartData = (data: any[], key: string, dateKey: string) => {
     return data
       .filter(item => item[key] !== null)
       .map(item => ({
-        date: format(new Date(item.created_at), 'MMM dd'),
+        date: format(new Date(item[dateKey]), 'MMM dd'),
         value: item[key] as number,
-        fullDate: item.created_at
+        fullDate: item[dateKey]
       }));
   };
+
+  const formatCurrency = (value: number) => `$${(value / 1000).toFixed(0)}k`;
 
   if (loading) {
     return (
@@ -146,26 +184,44 @@ const History = () => {
             History & Trends
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Track how AI's economic impact has evolved over time with detailed metrics and trend analysis.
+            Track headline labour & equity indicators alongside AI impact scores (Jan 2025 – today).
           </p>
         </div>
 
-        {/* Delta Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Delta Cards Grid - 6 cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <MetricDeltaCard
             title="Impact Rating"
-            latestValue={latest?.rating}
-            deltaValue={delta(baseline?.rating, latest?.rating)}
+            latestValue={reportsLatest?.rating}
+            deltaValue={delta(reportsBaseline?.rating, reportsLatest?.rating)}
           />
           <MetricDeltaCard
             title="Productivity vs Labor"
-            latestValue={latest?.prod_labor_score}
-            deltaValue={delta(baseline?.prod_labor_score, latest?.prod_labor_score)}
+            latestValue={reportsLatest?.prod_labor_score}
+            deltaValue={delta(reportsBaseline?.prod_labor_score, reportsLatest?.prod_labor_score)}
           />
           <MetricDeltaCard
-            title="American Dream Score"
-            latestValue={latest?.american_dream_score}
-            deltaValue={delta(baseline?.american_dream_score, latest?.american_dream_score)}
+            title="American Dream"
+            latestValue={reportsLatest?.american_dream_score}
+            deltaValue={delta(reportsBaseline?.american_dream_score, reportsLatest?.american_dream_score)}
+          />
+          <MetricDeltaCard
+            title="Unemployment Rate (%)"
+            latestValue={macroLatest?.unrate}
+            deltaValue={delta(macroBaseline?.unrate, macroLatest?.unrate)}
+            isPositiveGood={false}
+          />
+          <MetricDeltaCard
+            title="Median HH Income"
+            latestValue={macroLatest?.median_income}
+            deltaValue={delta(macroBaseline?.median_income, macroLatest?.median_income)}
+            formatValue={formatCurrency}
+          />
+          <MetricDeltaCard
+            title="Gini Index"
+            latestValue={macroLatest?.gini_index}
+            deltaValue={delta(macroBaseline?.gini_index, macroLatest?.gini_index)}
+            isPositiveGood={false}
           />
         </div>
 
@@ -179,15 +235,18 @@ const History = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="rating" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="rating">Impact Rating</TabsTrigger>
-                <TabsTrigger value="prod_labor_score">Productivity vs Labor</TabsTrigger>
-                <TabsTrigger value="american_dream_score">American Dream</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-6">
+                <TabsTrigger value="rating">Impact</TabsTrigger>
+                <TabsTrigger value="prod_labor_score">Prod vs Labor</TabsTrigger>
+                <TabsTrigger value="american_dream_score">Dream</TabsTrigger>
+                <TabsTrigger value="unemployment">Unemployment</TabsTrigger>
+                <TabsTrigger value="income">Income</TabsTrigger>
+                <TabsTrigger value="gini">Gini</TabsTrigger>
               </TabsList>
               
               <TabsContent value="rating">
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={formatChartData('rating')}>
+                <ResponsiveContainer width="100%" height={380}>
+                  <LineChart data={formatChartData(reportData, 'rating', 'created_at')}>
                     <XAxis dataKey="date" />
                     <YAxis domain={[0, 10]} />
                     <Tooltip 
@@ -206,8 +265,8 @@ const History = () => {
               </TabsContent>
               
               <TabsContent value="prod_labor_score">
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={formatChartData('prod_labor_score')}>
+                <ResponsiveContainer width="100%" height={380}>
+                  <LineChart data={formatChartData(reportData, 'prod_labor_score', 'created_at')}>
                     <XAxis dataKey="date" />
                     <YAxis />
                     <Tooltip 
@@ -226,8 +285,8 @@ const History = () => {
               </TabsContent>
               
               <TabsContent value="american_dream_score">
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={formatChartData('american_dream_score')}>
+                <ResponsiveContainer width="100%" height={380}>
+                  <LineChart data={formatChartData(reportData, 'american_dream_score', 'created_at')}>
                     <XAxis dataKey="date" />
                     <YAxis />
                     <Tooltip 
@@ -244,29 +303,93 @@ const History = () => {
                   </LineChart>
                 </ResponsiveContainer>
               </TabsContent>
+
+              <TabsContent value="unemployment">
+                <ResponsiveContainer width="100%" height={380}>
+                  <LineChart data={formatChartData(macroData, 'unrate', 'snapshot_date')}>
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value: number) => [`${value.toFixed(1)}%`, 'Unemployment Rate']}
+                      labelFormatter={(date) => `Date: ${date}`}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#ef4444" 
+                      strokeWidth={2}
+                      dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </TabsContent>
+
+              <TabsContent value="income">
+                <ResponsiveContainer width="100%" height={380}>
+                  <LineChart data={formatChartData(macroData, 'median_income', 'snapshot_date')}>
+                    <XAxis dataKey="date" />
+                    <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                    <Tooltip 
+                      formatter={(value: number) => [`$${(value / 1000).toFixed(1)}k`, 'Median Income']}
+                      labelFormatter={(date) => `Date: ${date}`}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#059669" 
+                      strokeWidth={2}
+                      dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </TabsContent>
+
+              <TabsContent value="gini">
+                <ResponsiveContainer width="100%" height={380}>
+                  <LineChart data={formatChartData(macroData, 'gini_index', 'snapshot_date')}>
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value: number) => [value.toFixed(1), 'Gini Index']}
+                      labelFormatter={(date) => `Date: ${date}`}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#7c2d12" 
+                      strokeWidth={2}
+                      dot={{ fill: '#7c2d12', strokeWidth: 2, r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
 
         {/* Summary Stats */}
-        {data.length > 0 && (
+        {reportData.length > 0 && (
           <Card className="shadow-lg">
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
                 <div>
-                  <p className="text-sm text-gray-500">Total Reports</p>
-                  <p className="text-2xl font-bold">{data.length}</p>
+                  <p className="text-sm text-gray-500">AI Reports</p>
+                  <p className="text-2xl font-bold">{reportData.length}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Macro Snapshots</p>
+                  <p className="text-2xl font-bold">{macroData.length}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">First Report</p>
                   <p className="text-2xl font-bold">
-                    {format(new Date(data[0].created_at), 'MMM dd, yyyy')}
+                    {reportData.length > 0 ? format(new Date(reportData[0].created_at), 'MMM dd, yyyy') : '—'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Latest Report</p>
+                  <p className="text-sm text-gray-500">Latest Update</p>
                   <p className="text-2xl font-bold">
-                    {format(new Date(latest.created_at), 'MMM dd, yyyy')}
+                    {reportsLatest ? format(new Date(reportsLatest.created_at), 'MMM dd, yyyy') : '—'}
                   </p>
                 </div>
               </div>

@@ -27,6 +27,21 @@ const FRED_SERIES = [
   { id: 'AWHMAN', title: 'Average Weekly Hours, Manufacturing (hours)' }
 ];
 
+// Helper function to fetch latest FRED data
+async function latestFred(seriesId: string, fredApiKey: string) {
+  const response = await fetch(
+    `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${fredApiKey}&sort_order=desc&limit=1&file_type=json`
+  );
+  
+  if (!response.ok) {
+    throw new Error(`FRED ${seriesId} error: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  const obs = data.observations?.[0];
+  return obs && obs.value !== '.' ? parseFloat(obs.value) : null;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -81,6 +96,38 @@ Deno.serve(async (req) => {
 
     if (articles.length === 0) {
       throw new Error('No articles found');
+    }
+
+    // Fetch macro economic indicators
+    console.log('Fetching macro economic data from FRED...');
+    
+    try {
+      const [unrate, medianIncome, gini] = await Promise.all([
+        latestFred('UNRATE', fredApiKey),            // Unemployment rate %
+        latestFred('MEHOINUSA672N', fredApiKey),     // Real median household income
+        latestFred('GINIALLCPI', fredApiKey)         // Gini coefficient
+      ]);
+
+      console.log('Macro data fetched:', { unrate, medianIncome, gini });
+
+      // Insert macro snapshot
+      const { error: macroError } = await supabase
+        .from('macro_snapshots')
+        .insert({
+          unrate: unrate,
+          median_income: medianIncome,
+          gini_index: gini
+        });
+
+      if (macroError) {
+        console.error('Macro snapshot insert error:', macroError);
+        // Continue with analysis even if macro insert fails
+      } else {
+        console.log('Macro snapshot inserted successfully');
+      }
+    } catch (macroError) {
+      console.error('Macro data fetch failed:', macroError);
+      // Continue with AI analysis even if macro data fails
     }
 
     // Select random FRED series for this analysis
