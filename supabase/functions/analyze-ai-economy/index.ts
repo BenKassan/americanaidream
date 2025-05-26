@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       `Title: ${article.title}\nDescription: ${article.description || 'No description'}\nDate: ${article.publishedAt}\n`
     ).join('\n---\n');
 
-    // Enhanced analysis with OpenAI using JSON mode
+    // Data-driven analysis with OpenAI using JSON mode
     console.log('Analyzing with OpenAI...');
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -84,26 +84,25 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are Dr. Elena Rodriguez, a world-renowned economist and leading expert on technological disruption and labor markets. You have published extensively on AI's impact on the American Dream, labor value, and economic inequality. 
+            content: `You are an AI economic analyst that provides data-driven insights based on current news. Your analysis should focus exclusively on the actual trends, data points, and real-world developments mentioned in the provided news articles.
 
-            Analyze the provided news articles with the depth and insight of a Nobel Prize-caliber economist. Focus specifically on:
-            - How AI is reshaping the traditional American Dream of upward mobility through work
-            - The divergence between productivity gains and labor compensation
-            - Data-driven trends in job displacement vs. job creation
-            - The changing value and meaning of human labor
-            - Economic implications for middle-class prosperity
+            Analyze the provided news articles about AI's impact on labor markets and the economy. Focus on:
+            - Actual data points, statistics, and trends mentioned in the articles
+            - Real company announcements, job market changes, and economic indicators
+            - Concrete examples of productivity gains vs. labor market effects
+            - Specific policy responses and industry developments reported
 
             Return ONLY valid JSON with exactly these keys:
-            - rating: number between 1-10 (1 = catastrophic for American workers/Dream, 10 = transformative opportunity)
-            - summary: comprehensive analysis (800-1000 characters) that includes specific economic insights, data trends, and implications for the American workforce
-            - productivity_insight: brief insight on productivity vs. labor value trends (200-250 characters)
-            - american_dream_impact: assessment of impact on traditional American Dream ideals (200-250 characters)
+            - rating: number between 1-10 (1 = severe negative impact on American workers, 10 = significant positive opportunities)
+            - summary: comprehensive data-driven analysis (800-1000 characters) citing specific trends and developments from the news
+            - productivity_insight: brief insight on productivity vs. labor trends from the news (200-250 characters)
+            - american_dream_impact: assessment based on reported economic data and trends (200-250 characters)
             
-            Write with the authority and depth expected from a top-tier economist. Include data-driven observations and nuanced economic analysis.`
+            Base your analysis strictly on the actual news content provided. Do not invent data or statistics.`
           },
           {
             role: 'user',
-            content: `Analyze these recent AI and labor market articles for their economic implications on American workers and the evolving nature of work:\n\n${articlesText}`
+            content: `Analyze these recent news articles about AI's impact on labor markets and economics for data-driven insights:\n\n${articlesText}`
           }
         ],
         temperature: 0.3,
@@ -156,7 +155,7 @@ Deno.serve(async (req) => {
 
     console.log('Analysis completed, storing in database...');
 
-    // Store the enhanced analysis in Supabase
+    // Store the analysis in Supabase
     const { data, error } = await supabase
       .from('reports')
       .insert({

@@ -205,10 +205,10 @@ const Index = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center space-x-2">
                   <Users className="h-5 w-5 text-purple-600" />
-                  <span>Economic Analysis</span>
+                  <span>Data-Driven Economic Analysis</span>
                 </CardTitle>
                 <CardDescription>
-                  Expert assessment by Dr. Elena Rodriguez • Last updated {lastUpdated}
+                  AI analysis based on current news data • Last updated {lastUpdated}
                 </CardDescription>
               </CardHeader>
               <CardContent className="prose prose-slate max-w-none">
@@ -225,7 +225,7 @@ const Index = () => {
             <CardHeader>
               <CardTitle>No Analysis Available</CardTitle>
               <CardDescription>
-                Click "Generate Analysis" to create the first American Dream impact assessment
+                Click "Generate Analysis" to create the first American Dream impact assessment based on current news data
               </CardDescription>
             </CardHeader>
           </Card>
@@ -284,7 +284,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-5xl mx-auto px-6 py-8 text-center text-gray-500">
-          <p>American Dream Monitor • Economic Analysis by AI • Tracking Labor & Productivity Trends</p>
+          <p>American Dream Monitor • AI Analysis Based on Real News Data • Tracking Labor & Productivity Trends</p>
         </div>
       </footer>
     </div>
