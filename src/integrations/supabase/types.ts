@@ -11,20 +11,26 @@ export type Database = {
     Tables: {
       reports: {
         Row: {
+          american_dream_impact: string | null
           created_at: string
           id: string
+          productivity_insight: string | null
           rating: number
           summary: string
         }
         Insert: {
+          american_dream_impact?: string | null
           created_at?: string
           id?: string
+          productivity_insight?: string | null
           rating: number
           summary: string
         }
         Update: {
+          american_dream_impact?: string | null
           created_at?: string
           id?: string
+          productivity_insight?: string | null
           rating?: number
           summary?: string
         }
