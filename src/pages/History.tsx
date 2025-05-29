@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -133,13 +132,29 @@ const History = () => {
   const macroLatest = macroData[macroData.length - 1];
 
   const formatChartData = (data: any[], key: string, dateKey: string) => {
-    return data
+    // Group data by date (YYYY-MM-DD format) and take the latest value for each day
+    const groupedByDate = data
       .filter(item => item[key] !== null && !isNaN(item[key]))
-      .map(item => ({
-        date: format(new Date(item[dateKey]), 'MMM dd'),
-        value: item[key] as number,
-        fullDate: item[dateKey]
-      }));
+      .reduce((acc, item) => {
+        const dateStr = format(new Date(item[dateKey]), 'yyyy-MM-dd');
+        
+        // If we haven't seen this date yet, or this item is later in the day, use this item
+        if (!acc[dateStr] || new Date(item[dateKey]) > new Date(acc[dateStr].fullDate)) {
+          acc[dateStr] = {
+            date: format(new Date(item[dateKey]), 'MMM dd'),
+            value: item[key] as number,
+            fullDate: item[dateKey],
+            dateStr: dateStr
+          };
+        }
+        
+        return acc;
+      }, {} as Record<string, any>);
+
+    // Convert back to array and sort by date
+    return Object.values(groupedByDate).sort((a: any, b: any) => 
+      new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime()
+    );
   };
 
   const formatCurrency = (value: number) => {
