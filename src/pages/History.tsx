@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,6 +107,10 @@ const History = () => {
           // Continue even if macro data fails
         }
 
+        console.log('Reports data:', reports?.length);
+        console.log('Macro data:', macros?.length);
+        console.log('Sample macro data:', macros?.[0]);
+
         setReportData(reports || []);
         setMacroData(macros || []);
       } catch (err) {
@@ -132,9 +137,15 @@ const History = () => {
   const macroLatest = macroData[macroData.length - 1];
 
   const formatChartData = (data: any[], key: string, dateKey: string) => {
+    console.log(`Formatting chart data for ${key}:`, data.length, 'items');
+    
     // Group data by date (YYYY-MM-DD format) and take the latest value for each day
     const groupedByDate = data
-      .filter(item => item[key] !== null && !isNaN(item[key]))
+      .filter(item => {
+        const hasValue = item[key] !== null && item[key] !== undefined && !isNaN(item[key]);
+        if (!hasValue) console.log(`Filtered out item with invalid ${key}:`, item[key]);
+        return hasValue;
+      })
       .reduce((acc, item) => {
         const dateStr = format(new Date(item[dateKey]), 'yyyy-MM-dd');
         
@@ -152,9 +163,12 @@ const History = () => {
       }, {} as Record<string, any>);
 
     // Convert back to array and sort by date
-    return Object.values(groupedByDate).sort((a: any, b: any) => 
+    const result = Object.values(groupedByDate).sort((a: any, b: any) => 
       new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime()
     );
+    
+    console.log(`Chart data for ${key} result:`, result.length, 'points');
+    return result;
   };
 
   const formatCurrency = (value: number) => {
@@ -166,6 +180,11 @@ const History = () => {
     if (isNaN(value)) return '—';
     return `${value.toFixed(1)}%`;
   };
+
+  // Create formatted chart data for each macro metric
+  const unemploymentChartData = formatChartData(macroData, 'unrate', 'snapshot_date');
+  const incomeChartData = formatChartData(macroData, 'median_income', 'snapshot_date');
+  const giniChartData = formatChartData(macroData, 'gini_index', 'snapshot_date');
 
   if (loading) {
     return (
@@ -333,63 +352,87 @@ const History = () => {
               </TabsContent>
 
               <TabsContent value="unemployment">
-                <ResponsiveContainer width="100%" height={380}>
-                  <LineChart data={formatChartData(macroData, 'unrate', 'snapshot_date')}>
-                    <XAxis dataKey="date" />
-                    <YAxis tickFormatter={(value) => `${value.toFixed(1)}%`} />
-                    <Tooltip 
-                      formatter={(value: number) => [`${value.toFixed(1)}%`, 'Unemployment Rate']}
-                      labelFormatter={(date) => `Date: ${date}`}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#ef4444" 
-                      strokeWidth={2}
-                      dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  {unemploymentChartData.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No unemployment data available</p>
+                      <p className="text-sm">Run the edge function to populate macro snapshots</p>
+                    </div>
+                  )}
+                  <ResponsiveContainer width="100%" height={380}>
+                    <LineChart data={unemploymentChartData}>
+                      <XAxis dataKey="date" />
+                      <YAxis tickFormatter={(value) => `${value.toFixed(1)}%`} />
+                      <Tooltip 
+                        formatter={(value: number) => [`${value.toFixed(1)}%`, 'Unemployment Rate']}
+                        labelFormatter={(date) => `Date: ${date}`}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#ef4444" 
+                        strokeWidth={2}
+                        dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </TabsContent>
 
               <TabsContent value="income">
-                <ResponsiveContainer width="100%" height={380}>
-                  <LineChart data={formatChartData(macroData, 'median_income', 'snapshot_date')}>
-                    <XAxis dataKey="date" />
-                    <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
-                    <Tooltip 
-                      formatter={(value: number) => [`$${(value / 1000).toFixed(1)}k`, 'Median Income']}
-                      labelFormatter={(date) => `Date: ${date}`}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#059669" 
-                      strokeWidth={2}
-                      dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  {incomeChartData.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No income data available</p>
+                      <p className="text-sm">Run the edge function to populate macro snapshots</p>
+                    </div>
+                  )}
+                  <ResponsiveContainer width="100%" height={380}>
+                    <LineChart data={incomeChartData}>
+                      <XAxis dataKey="date" />
+                      <YAxis tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                      <Tooltip 
+                        formatter={(value: number) => [`$${(value / 1000).toFixed(1)}k`, 'Median Income']}
+                        labelFormatter={(date) => `Date: ${date}`}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#059669" 
+                        strokeWidth={2}
+                        dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </TabsContent>
 
               <TabsContent value="gini">
-                <ResponsiveContainer width="100%" height={380}>
-                  <LineChart data={formatChartData(macroData, 'gini_index', 'snapshot_date')}>
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip 
-                      formatter={(value: number) => [value.toFixed(1), 'Gini Index']}
-                      labelFormatter={(date) => `Date: ${date}`}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#7c2d12" 
-                      strokeWidth={2}
-                      dot={{ fill: '#7c2d12', strokeWidth: 2, r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  {giniChartData.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No Gini index data available</p>
+                      <p className="text-sm">Run the edge function to populate macro snapshots</p>
+                    </div>
+                  )}
+                  <ResponsiveContainer width="100%" height={380}>
+                    <LineChart data={giniChartData}>
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip 
+                        formatter={(value: number) => [value.toFixed(1), 'Gini Index']}
+                        labelFormatter={(date) => `Date: ${date}`}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="value" 
+                        stroke="#7c2d12" 
+                        strokeWidth={2}
+                        dot={{ fill: '#7c2d12', strokeWidth: 2, r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
